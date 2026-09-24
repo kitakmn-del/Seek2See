@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Person Search</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+
+            font-family: Arial, sans-serif;
+
+            background: #0f1117;
+
+            color: white;
+
+            min-height: 100vh;
+
+            padding: 50px 20px;
+
+        }
+
+
+        .container {
+
+            width: 90%;
+
+            max-width: 900px;
+
+            margin: auto;
+
+        }
+
+
+        h1 {
+
+            text-align: center;
+
+            font-size: 42px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .subtitle {
+
+            text-align: center;
+
+            color: #9ca3af;
+
+            margin-bottom: 35px;
+
+        }
+
+
+        .search-box {
+
+            background: #181b24;
+
+            padding: 25px;
+
+            border-radius: 15px;
+
+            border: 1px solid #292d38;
+
+        }
+
+
+        select,
+        input {
+
+            width: 100%;
+
+            padding: 15px;
+
+            margin-bottom: 15px;
+
+            border-radius: 10px;
+
+            border: 1px solid #343947;
+
+            background: #10131a;
+
+            color: white;
+
+            font-size: 16px;
+
+            outline: none;
+
+        }
+
+
+        button {
+
+            width: 100%;
+
+            padding: 15px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: white;
+
+            color: #111;
+
+            font-size: 17px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+
+        button:hover {
+
+            background: #ddd;
+
+        }
+
+
+        #result {
+
+            margin-top: 25px;
+
+        }
+
+
+        .result-card {
+
+            background: #181b24;
+
+            border: 1px solid #292d38;
+
+            border-radius: 12px;
+
+            padding: 20px;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .result-card h2 {
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .result-card a {
+
+            color: #7db7ff;
+
+            word-break: break-all;
+
+        }
+
+
+        .description {
+
+            color: #c5c7ce;
+
+            margin: 12px 0;
+
+            line-height: 1.6;
+
+            white-space: pre-wrap;
+
+        }
+
+
+        .loading {
+
+            text-align: center;
+
+            color: #9ca3af;
+
+        }
+
+
+        .ai-card {
+
+            border: 1px solid #454b60;
+
+        }
+
+
+        .source-number {
+
+            color: #9ca3af;
+
+            font-size: 14px;
+
+            margin-bottom: 8px;
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <h1>Person Search</h1>
+
+
+    <p class="subtitle">
+
+        Поиск публичной информации
+
+    </p>
+
+
+    <div class="search-box">
+
+
+        <select id="searchType">
+
+            <option value="name">
+                Имя и фамилия
+            </option>
+
+            <option value="phone">
+                Номер телефона
+            </option>
+
+            <option value="nickname">
+                Никнейм
+            </option>
+
+            <option value="email">
+                Email
+            </option>
+
+            <option value="other">
+                Другая информация
+            </option>
+
+        </select>
+
+
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Введите информацию..."
+        >
+
+
+        <button onclick="searchPerson()">
+
+            🔎 Найти
+
+        </button>
+
+
+    </div>
+
+
+    <div id="result"></div>
+
+
+</div>
+
+
+<script>
+
+
+async function searchPerson() {
+
+
+    const type =
+        document.getElementById("searchType").value;
+
+
+    const query =
+        document.getElementById("searchInput").value;
+
+
+    const result =
+        document.getElementById("result");
+
+
+    if (query.trim() === "") {
+
+        alert("Введите информацию для поиска.");
+
+        return;
+
+    }
+
+
+    result.innerHTML = `
+
+        <div class="result-card">
+
+            <p class="loading">
+
+                🔎 Ищем информацию...
+
+            </p>
+
+        </div>
+
+    `;
+
+
+    try {
+
+
+        const response = await fetch(
+
+            "/search",
+
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type": "application/json"
+
+                },
+
+                body: JSON.stringify({
+
+                    type: type,
+
+                    query: query
+
+                })
+
+            }
+
+        );
+
+
+        const data = await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+
+                data.error || "Ошибка сервера"
+
+            );
+
+        }
+
+
+        if (
+            !data.results ||
+            data.results.length === 0
+        ) {
+
+            result.innerHTML = `
+
+                <div class="result-card">
+
+                    <h2>
+                        Ничего не найдено
+                    </h2>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // AI-анализ
+
+        result.innerHTML = `
+
+            <div class="result-card ai-card">
+
+                <h2>
+                    🤖 AI-анализ
+                </h2>
+
+                <p class="description">
+                    ${escapeHtml(
+                        data.analysis ||
+                        "AI-анализ не получен"
+                    )}
+                </p>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <h2>
+
+                    🔎 Найдено результатов:
+                    ${data.results.length}
+
+                </h2>
+
+            </div>
+
+        `;
+
+
+        // Вывод результатов
+
+        data.results.forEach(
+
+            (item, index) => {
+
+
+                const card =
+                    document.createElement("div");
+
+
+                card.className =
+                    "result-card";
+
+
+                card.innerHTML = `
+
+                    <p class="source-number">
+
+                        Источник ${index + 1}
+
+                    </p>
+
+
+                    <h2>
+
+                        ${escapeHtml(
+                            item.title ||
+                            "Без названия"
+                        )}
+
+                    </h2>
+
+
+                    <p class="description">
+
+                        ${escapeHtml(
+                            item.content ||
+                            "Нет описания"
+                        )}
+
+                    </p>
+
+
+                    <a
+
+                        href="${escapeAttribute(
+                            item.url || "#"
+                        )}"
+
+                        target="_blank"
+
+                        rel="noopener noreferrer"
+
+                    >
+
+                        🔗 Открыть источник
+
+                    </a>
+
+                `;
+
+
+                result.appendChild(card);
+
+
+            }
+
+        );
+
+
+    } catch (error) {
+
+
+        console.error(error);
+
+
+        result.innerHTML = `
+
+            <div class="result-card">
+
+                <h2>
+                    ❌ Ошибка
+                </h2>
+
+
+                <p class="description">
+
+                    ${escapeHtml(
+                        error.message
+                    )}
+
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+
+function escapeHtml(text) {
+
+
+    const div =
+        document.createElement("div");
+
+
+    div.textContent =
+        String(text);
+
+
+    return div.innerHTML;
+
+}
+
+
+
+function escapeAttribute(text) {
+
+
+    return String(text)
+
+        .replace(/&/g, "&amp;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;");
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
